@@ -20,32 +20,140 @@ class Server
 		$this->connection = fsockopen($hostname, $port, $errno, $errstr, 10); 
 	}
 	
-	private function getResult(){
+	private function printResult($result, $type = ""){
+	    switch ($type) {
+	        case 'echo':
+	            echo implode("\n",$result['message']);
+	            break;
+	        case 'html'
+	            echo implode("</br>",$result['message']);
+	            break;
+            case 'vardump'
+                var_dump($result['message']);
+                break;
+            case 'printr'
+                print_r($result['message']);
+                break;
+	    }
+	    return $result;
+	}
 	
+	private function getResult(){
+	    $ret = fgets($this->connection);
+	    
+	    if($ret===false) return false;	// Did we get results?
+	    
+	    $result = array(
+	        'code' => str_replace("\r\n","",$ret),
+	        'message' => array();
+	    );
+	    
+	    while(($ret=fgets($this->connection))!==false) {
+	    	if($ret=="\r\n") { return $result; }
+	    	$result['message'][] = str_replace("\r\n","",$ret);
+	    }
+	    return $result;
+	}
+	
+	public function cinf($filename){
+	    $command = "CINF " . $filename;
+	    
+		fwrite($this->connection,  $command);
+		
+		if($result = getResult()){
+		    return printResult($result);
+		}
+		else{
+		    echo 'Unknown error';
+		}
+	}
+	
+	public function cls(){
+	    $command = "CLS";
+	    
+		fwrite($this->connection,  $command);
+		
+		if($result = getResult()){
+		    return printResult($result);
+		}
+		else{
+		    echo 'Unknown error';
+		}
+	}
+	
+	public function tls($folder = "./"){
+	    $command = "TLS " . $folder;
+	    
+		fwrite($this->connection,  $command);
+		
+		if($result = getResult()){
+		    return printResult($result);
+		}
+		else{
+		    echo 'Unknown error';
+		}
+	}
+	
+	public function version($component = "SERVER"){
+	    $command = "VERSION " . strtoupper($component);
+	    
+		fwrite($this->connection,  $command);
+		
+		if($result = getResult()){
+		    return printResult($result);
+		}
+		else{
+		    echo 'Unknown error';
+		}
 	}
 	
 	public function info($channel = "", $layer ""){
+	    $command = "INFO ";
+	
 		if(intval($channel)){
-			
+			$command .= $channel;
+			if(intval($layer)){
+			    $command .= "-" . $layer;
+			}
 		}
 		else{
-			
+			$command .= strtoupper($channel);
 		}
 		
-		fwrite($this->connection,  $out);
+		fwrite($this->connection,  $command);
 		
 		if($result = getResult()){
-		
+		    return printResult($result);
 		}
-		
-		
-		if($ret===false) return false;	// Did we get results?
-		if(intval($ret[0]) >=4) {
-		    $this->error=str_replace("\r\n","",$ret); // Check for resultcode 4xx or 5xx
-		    return false;
+		else{
+		    echo 'Unknown error';
 		}
-		$this->result=str_replace("\r\n","",$ret);
-		return true;
+	}
+	
+	public function diag(){
+	    $command = "DIAG";
+	    
+		fwrite($this->connection,  $command);
+		
+		if($result = getResult()){
+		    return printResult($result);
+		}
+		else{
+		    echo 'Unknown error';
+		}
+	}
+	
+	public function bye(){
+	    $command = "BYE";
+	    
+		fwrite($this->connection,  $command);
+		
+		if($result = getResult()){
+		    return printResult($result);
+		}
+		else{
+		    echo 'Unknown error';
+		}
 	}
 
 }
